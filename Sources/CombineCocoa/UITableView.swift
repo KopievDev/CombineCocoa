@@ -105,7 +105,7 @@ public extension UITableView {
 
     func didSelectItem<Element>(type: Element.Type) -> AnyPublisher<Element, Never> {
         let delegate = CombineTableViewDelegate<Element>(tableView: self)
-        DispatchQueue.main.sync {
+        DispatchQueue.main.async {
             self.delegate = delegate
         }
         return delegate.didSelectItem.eraseToAnyPublisher()

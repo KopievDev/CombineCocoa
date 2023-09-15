@@ -212,6 +212,7 @@ final class CombineTableViewDelegate<Element>: NSObject, UITableViewDelegate {
         self.completion = completion
         super.init()
         didSelectItem
+            .throttle(for: 0.3, scheduler: DispatchQueue.main, latest: true)
             .sink { self.completion($0) }
             .store(in: &subscriptions)
     }

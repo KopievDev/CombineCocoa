@@ -103,12 +103,13 @@ public extension UITableView {
         cells.sink(receiveCompletion: { _ in }, receiveValue: items(cellType: Cell.self, builder))
     }
 
-    func didSelectItem<Element>(type: Element.Type) -> AnyPublisher<Element, Never> {
+    func didSelectItem<Element>(
+        type: Element.Type,
+        completion: @escaping (Element) -> Void
+    ) -> AnyCancellable {
         let delegate = CombineTableViewDelegate<Element>(tableView: self)
-        DispatchQueue.main.async {
-            self.delegate = delegate
-        }
-        return delegate.didSelectItem.eraseToAnyPublisher()
+        self.delegate = delegate
+        return delegate.didSelectItem.sink { element in completion(element) }
     }
 
     func register<Cell: UITableViewCell>(_ type: Cell.Type) {

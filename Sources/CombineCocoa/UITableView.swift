@@ -60,6 +60,49 @@ public extension UITableView {
         }
     }
 
+    /**
+     Example
+
+         enum Cell { case cell(SomeData), header(String) }
+         @Published var items = [Cell]()
+         let collection = UICollectionView()
+         private var subscriptions = Set<AnyCancellable>()
+
+         collection.bind($items) { col, index, cells in
+             switch cells {
+             case .cell(let data):
+             return col.dequeueCell(HistoryCell.self, index) { $0.render(model: data) }
+             case .header(let data):
+             return col.dequeueCell(HistoryDayCell.self, index) { $0.render(model: data) }
+             }
+         }.store(in: &subscriptions)
+     */
+    func bind<Item: Publisher, Element>(
+        _ cells: Item,
+        _ builder: @escaping (UITableView, IndexPath, Element) -> UITableViewCell
+    ) -> AnyCancellable where Item.Output == [Element] {
+        cells.sink(receiveCompletion: { _ in }, receiveValue: items(builder))
+    }
+
+    /**
+     Example
+
+         @Published var items = [String]()
+         let collec = UICollectionView()
+         private var subscriptions = Set<AnyCancellable>()
+
+         collec.bind($items, cellType: SomeCell.self) { index, element, cell in
+            cell.render(model: element)
+         }.store(in: &subscriptions)
+     */
+    func bind<Cell: UITableViewCell, Item: Publisher, Element>(
+        _ cells: Item,
+        cellType: Cell.Type,
+        _ builder: @escaping (IndexPath, Element, Cell) -> Void
+    ) -> AnyCancellable where Item.Output == [Element] {
+        cells.sink(receiveCompletion: { _ in }, receiveValue: items(cellType: Cell.self, builder))
+    }
+
     func didSelectItem<Element>(type: Element.Type) -> AnyPublisher<Element, Never> {
         let delegate = CombineTableViewDelegate<Element>(tableView: self)
         return delegate.didSelectItem.eraseToAnyPublisher()

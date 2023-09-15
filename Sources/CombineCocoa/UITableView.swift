@@ -60,6 +60,11 @@ public extension UITableView {
         }
     }
 
+    func didSelectItem<Element>(type: Element.Type) -> AnyPublisher<Element, Never> {
+        let delegate = CombineTableViewDelegate<Element>(tableView: self)
+        return delegate.didSelectItem.eraseToAnyPublisher()
+    }
+
     func register<Cell: UITableViewCell>(_ type: Cell.Type) {
         register(type.self, forCellReuseIdentifier: type.reuseId)
     }
@@ -147,5 +152,28 @@ final class CombineTableViewDataSourceWithType<Element, Cell: UITableViewCell>: 
         guard let cell = tableView.dequeueReusableCell(withIdentifier: cellType.reuseId, for: indexPath) as? Cell else { return UITableViewCell() }
         build(indexPath, elements[indexPath.row], cell)
         return cell
+    }
+}
+
+final class CombineTableViewDelegate<Element>: NSObject, UITableViewDelegate {
+
+    let didSelectItem = PassthroughSubject<Element, Never>()
+
+    init(tableView: UITableView) {
+        super.init()
+        tableView.delegate = self
+    }
+
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        if let dataSource = tableView.dataSource as? CombineTableViewDataSourceWithType<Element, UITableViewCell> {
+            let element = dataSource.elements[indexPath.row]
+            DispatchQueue.main.async { self.didSelectItem.send(element) }
+
+        }
+
+        if let dataSource = tableView.dataSource as? CombineTableViewDataSource<Element> {
+            let element = dataSource.elements[indexPath.row]
+            DispatchQueue.main.async { self.didSelectItem.send(element) }
+        }
     }
 }

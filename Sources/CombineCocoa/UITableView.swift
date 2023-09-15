@@ -60,6 +60,40 @@ public extension UITableView {
         }
     }
 
+    func register<Cell: UITableViewCell>(_ type: Cell.Type) {
+        register(type.self, forCellReuseIdentifier: type.reuseId)
+    }
+
+    func register<Header: UITableViewHeaderFooterView>(_ type: Header.Type) {
+        register(type.self, forHeaderFooterViewReuseIdentifier: type.reuseId)
+    }
+
+    func dequeueCell<T: UITableViewCell>(_ indexPath: IndexPath) -> T {
+        guard let cell = dequeueReusableCell(withIdentifier: T.reuseId, for: indexPath) as? T else {
+            fatalError("No cell for this id: \(T.reuseId)")
+        }
+        return cell
+    }
+
+    func dequeueCell<T: UITableViewCell>(_ type: T.Type,
+                                                _ indexPath: IndexPath,
+                                                updateBlock: (T) -> Void = { _ in }) -> T {
+        guard let cell = dequeueReusableCell(withIdentifier: T.reuseId, for: indexPath) as? T else {
+            fatalError("No cell for this id: \(T.reuseId)")
+        }
+        updateBlock(cell)
+        return cell
+    }
+
+    func dequeue<T: UITableViewHeaderFooterView>(_ type: T.Type,
+                                                        updateBlock: (T) -> Void = { _ in }) -> T {
+        guard let cell = dequeueReusableHeaderFooterView(withIdentifier: T.reuseId) as? T else {
+            fatalError("No cell for this id: \(T.reuseId)")
+        }
+        updateBlock(cell)
+        return cell
+    }
+
 }
 
 final class CombineTableViewDataSource<Element>: NSObject, UITableViewDataSource {

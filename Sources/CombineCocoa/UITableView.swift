@@ -205,14 +205,14 @@ final class CombineTableViewDataSourceWithType<Element, Cell: UITableViewCell>: 
 final class CombineTableViewDelegate<Element>: NSObject, UITableViewDelegate {
 
     let didSelectItem = PassthroughSubject<Element, Never>()
-    let completion:  (Element) -> Void
+    let completion: (Element) -> Void
     private var subscriptions: Set<AnyCancellable> = []
 
     init(completion: @escaping (Element) -> Void) {
         self.completion = completion
         super.init()
         didSelectItem
-            .sink { [weak self] in self?.completion($0) }
+            .sink { self.completion($0) }
             .store(in: &subscriptions)
     }
 

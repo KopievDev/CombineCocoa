@@ -105,6 +105,7 @@ public extension UITableView {
 
     func didSelectItem<Element>(type: Element.Type) -> AnyPublisher<Element, Never> {
         let delegate = CombineTableViewDelegate<Element>(tableView: self)
+        self.delegate = delegate
         return delegate.didSelectItem.eraseToAnyPublisher()
     }
 
@@ -201,8 +202,8 @@ final class CombineTableViewDataSourceWithType<Element, Cell: UITableViewCell>: 
 final class CombineTableViewDelegate<Element>: NSObject, UITableViewDelegate {
 
     let didSelectItem = PassthroughSubject<Element, Never>()
-    let tableView: UITableView
-    
+    var tableView: UITableView
+
     init(tableView: UITableView) {
         self.tableView = tableView
         super.init()

@@ -107,7 +107,7 @@ public extension UITableView {
         type: Element.Type,
         completion: @escaping (Element) -> Void
     ) -> AnyCancellable {
-        let delegate = CombineTableViewDelegate<Element>(tableView: self)
+        let delegate = CombineTableViewDelegate<Element>(completion: completion)
         self.delegate = delegate
         return delegate.didSelectItem.sink { element in completion(element) }
     }
@@ -205,12 +205,15 @@ final class CombineTableViewDataSourceWithType<Element, Cell: UITableViewCell>: 
 final class CombineTableViewDelegate<Element>: NSObject, UITableViewDelegate {
 
     let didSelectItem = PassthroughSubject<Element, Never>()
-    var tableView: UITableView
+    let completion: (Element) -> Void
+    private var subscriptions: Set<AnyCancellable> = []
 
-    init(tableView: UITableView) {
-        self.tableView = tableView
+    init(completion: @escaping (Element) -> Void) {
+        self.completion = completion
         super.init()
-        tableView.delegate = self
+        didSelectItem
+            .sink { self.completion($0) }
+            .store(in: &subscriptions)
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {

@@ -201,8 +201,10 @@ final class CombineTableViewDataSourceWithType<Element, Cell: UITableViewCell>: 
 final class CombineTableViewDelegate<Element>: NSObject, UITableViewDelegate {
 
     let didSelectItem = PassthroughSubject<Element, Never>()
-
+    let tableView: UITableView
+    
     init(tableView: UITableView) {
+        self.tableView = tableView
         super.init()
         tableView.delegate = self
     }

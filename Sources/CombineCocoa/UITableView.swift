@@ -282,9 +282,7 @@ open class BaseCollectionCell<ViewModel>: UICollectionViewCell {
         commonInit()
     }
 
-    open func commonInit() {
-        selectionStyle = .none
-    }
+    open func commonInit() { }
 
     open func render(viewModel: ViewModel) { }
 }

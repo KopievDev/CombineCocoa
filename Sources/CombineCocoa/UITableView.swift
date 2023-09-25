@@ -173,7 +173,15 @@ final class CombineTableViewDataSource<Element>: NSObject, UITableViewDataSource
     }
 }
 
-final class CombineTableViewDataSourceWithType<Element, Cell: UITableViewCell>: NSObject, UITableViewDataSource {
+protocol Did {
+    associatedtype T
+    var didSelectItem: PassthroughSubject<T, Never> { get set }
+}
+
+final class CombineTableViewDataSourceWithType<Element, Cell: UITableViewCell>: NSObject, UITableViewDataSource, Did {
+
+    typealias T = Element
+    var didSelectItem: PassthroughSubject<Element, Never> = .init()
 
     let build: (IndexPath, Element, Cell) -> Void
     var elements: [Element] = []
@@ -200,6 +208,19 @@ final class CombineTableViewDataSourceWithType<Element, Cell: UITableViewCell>: 
         build(indexPath, elements[indexPath.row], cell)
         return cell
     }
+
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        if let dataSource = tableView.dataSource as? CombineTableViewDataSourceWithType<Element, UITableViewCell> {
+            let element = dataSource.elements[indexPath.row]
+            DispatchQueue.main.async { self.didSelectItem.send(element) }
+
+        }
+
+        if let dataSource = tableView.dataSource as? CombineTableViewDataSource<Element> {
+            let element = dataSource.elements[indexPath.row]
+            DispatchQueue.main.async { self.didSelectItem.send(element) }
+        }
+    }
 }
 
 final class CombineTableViewDelegate<Element>: NSObject, UITableViewDelegate {
@@ -212,7 +233,6 @@ final class CombineTableViewDelegate<Element>: NSObject, UITableViewDelegate {
         self.completion = completion
         super.init()
         didSelectItem
-            .throttle(for: 0.3, scheduler: DispatchQueue.main, latest: true)
             .sink { self.completion($0) }
             .store(in: &subscriptions)
     }
@@ -229,4 +249,42 @@ final class CombineTableViewDelegate<Element>: NSObject, UITableViewDelegate {
             DispatchQueue.main.async { self.didSelectItem.send(element) }
         }
     }
+}
+
+open class BaseCell<ViewModel>: UITableViewCell {
+
+    public override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        commonInit()
+    }
+
+    public required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        commonInit()
+    }
+
+    open func commonInit() {
+        selectionStyle = .none
+    }
+
+    open func render(viewModel: ViewModel) { }
+}
+
+open class BaseCollectionCell<ViewModel>: UICollectionViewCell {
+
+    public override init(frame: CGRect) {
+        super.init(frame: frame)
+        commonInit()
+    }
+
+    public required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        commonInit()
+    }
+
+    open func commonInit() {
+        selectionStyle = .none
+    }
+
+    open func render(viewModel: ViewModel) { }
 }
